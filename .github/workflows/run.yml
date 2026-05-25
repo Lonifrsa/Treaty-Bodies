@@ -1,8 +1,8 @@
-name: Treaty Monitor
+name: Treaty Bodies
 
 on:
   schedule:
-    - cron: '0 2 * * 1'   # Monday 09:00 Bangkok (UTC+7)
+    - cron: '0 2 * * 1'   # Monday 09:00 Bangkok
   workflow_dispatch:
 
 jobs:
@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: List files (DEBUG)
+        run: ls -R
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,11 +27,20 @@ jobs:
           pip install requests beautifulsoup4 pandas openpyxl
 
       - name: Run script
-        run: python treaty_monitor.py
+        run: |
+          # Try to find the script automatically
+          if [ -f "treaty_monitor.py" ]; then
+            python treaty_monitor.py
+          else
+            echo "Searching for script..."
+            SCRIPT_PATH=$(find . -name "treaty_monitor.py" | head -n 1)
+            echo "Found at: $SCRIPT_PATH"
+            python $SCRIPT_PATH
+          fi
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
 
-      - name: Save results (persist Excel + tracking)
+      - name: Save results
         run: |
           git config --global user.name "automation"
           git config --global user.email "actions@github.com"
